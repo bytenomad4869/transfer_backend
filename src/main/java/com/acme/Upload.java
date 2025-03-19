@@ -10,9 +10,27 @@ import org.jboss.resteasy.reactive.RestForm;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
-@Path("/upload/{projectId}")
+@Path("/upload")
 public class Upload {
+    @POST
+    @Path("/init")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response initialize(List<String> fileName){
+        ClickHouse session = new ClickHouse("transfer");
+        String id = Utils.generateUUID(true);
+
+        session.query("INSERT INTO session (id, user_id, created_at, updated_at, status) VALUES ('" + id + "', 1, now(), null, 0);");
+
+        for (String name : fileName){
+            String fileId = Utils.generateUUID(true);
+            session.query("INSERT INTO file (id, session_id, path, total_chunks, status) VALUES ('" + fileId + "', '" + id + "', '" + name + "', 10, 0);");
+        }
+
+        return Response.ok(id).build();
+    }
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)

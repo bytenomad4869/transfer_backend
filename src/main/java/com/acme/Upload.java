@@ -14,22 +14,26 @@ import java.util.List;
 
 @Path("/upload")
 public class Upload {
+    private final String DIR = "/tmp/";
+
     @POST
     @Path("/init")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response initialize(List<String> fileName){
+    public Response initialize(List<Item> items){
         ClickHouse session = new ClickHouse("transfer");
-        String id = Utils.generateUUID(true);
+        String sessionId = Utils.generateUUID(true);
 
-        session.query("INSERT INTO session (id, user_id, created_at, updated_at, status) VALUES ('" + id + "', 1, now(), null, 0);");
+        // user_id is DEMO 1
+        session.query("INSERT INTO session (id, user_id, created_at, updated_at, status) VALUES ('" + sessionId + "', 1, now(), null, 0);");
 
-        for (String name : fileName){
-            String fileId = Utils.generateUUID(true);
-            session.query("INSERT INTO file (id, session_id, path, total_chunks, status) VALUES ('" + fileId + "', '" + id + "', '" + name + "', 10, 0);");
+        for (Item i : items){
+            session.query("INSERT INTO file (id, session_id, path, file_name, total_chunks, status) VALUES ('" + i.getId() + "', '" + sessionId + "', '" + i.getPath() + "', '" + i.getFileName() + "', " + i.getTotalChunks() + ", 0);");
         }
 
-        return Response.ok(id).build();
+        createTmpDir(sessionId);
+
+        return Response.ok(sessionId).build();
     }
 
     @POST
@@ -55,6 +59,15 @@ public class Upload {
             return Response.ok("Chunk " + c.getIndex() + " hochgeladen").build();
         } catch (Exception e) {
             return Response.serverError().entity("Fehler beim Hochladen: " + e.getMessage()).build();
+        }
+    }
+
+    private void createTmpDir(String id) {
+        try {
+            java.nio.file.Path dir = Paths.get(DIR, id);
+            Files.createDirectories(dir);
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 

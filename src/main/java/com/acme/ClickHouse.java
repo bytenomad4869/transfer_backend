@@ -1,6 +1,8 @@
 package com.acme;
 
 import com.clickhouse.jdbc.ClickHouseDataSource;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -9,16 +11,18 @@ import java.util.Properties;
 
 // @ApplicationScoped
 public class ClickHouse {
-    // @ConfigProperty(name = "quarkus.datasource.jdbc.url")
-    String url = "jdbc:clickhouse://localhost:18123/transfer";
-    // @ConfigProperty(name = "quarkus.datasource.username")
-    String username = "default";
-    // @ConfigProperty(name = "quarkus.datasource.password")
-    String password = "root1234";
+    String url;
+    String username;
+    String password;
 
     private ClickHouseDataSource dataSource;
 
     public ClickHouse(String database) {
+        Config config = ConfigProvider.getConfig();
+        this.url = config.getValue("quarkus.datasource.jdbc.url", String.class);
+        this.username = config.getValue("quarkus.datasource.username", String.class);
+        this.password = config.getValue("quarkus.datasource.password", String.class);
+
         try {
             Properties info = new Properties();
             info.put("user", username);
@@ -26,7 +30,7 @@ public class ClickHouse {
             info.put("database", database);
 
             this.dataSource = new ClickHouseDataSource(url, info);
-        } catch (SQLException e){
+        } catch (SQLException e) {
             // TODO
         }
     }

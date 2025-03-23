@@ -5,6 +5,7 @@ import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
@@ -44,5 +45,22 @@ public class ClickHouse {
         } catch (SQLException e) {
             // TODO
         }
+    }
+
+    public boolean uploadCompleted(String sessionId) {
+        try {
+            Connection conn = dataSource.getConnection();
+
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT count(*) FROM file WHERE session_id = '" + sessionId + "' AND status = 0");
+            rs.next();
+
+            if(rs.getInt(1) == 0) return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }

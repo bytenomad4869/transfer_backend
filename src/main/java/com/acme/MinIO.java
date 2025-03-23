@@ -2,8 +2,13 @@ package com.acme;
 
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.file.Path;
 
 public class MinIO {
     private String url;
@@ -38,6 +43,19 @@ public class MinIO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
+    public void importFile(String bucketName, String objectName, Path filePath) {
+        try (InputStream in = new FileInputStream(filePath.toFile())) {
+            this.minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .stream(in, filePath.toFile().length(), -1)
+                            .build()
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

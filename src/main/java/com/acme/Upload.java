@@ -1,10 +1,9 @@
 package com.acme;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jboss.resteasy.reactive.MultipartForm;
 import org.jboss.resteasy.reactive.RestForm;
 
 import java.io.*;
@@ -14,7 +13,7 @@ import java.util.List;
 
 @Path("/upload")
 public class Upload {
-    private final String DIR = "/tmp/";
+    private final String DIR = "/tmp/transfer/";
 
     @POST
     @Path("/init")
@@ -33,31 +32,29 @@ public class Upload {
 
         createTmpDir(sessionId);
 
-        return Response.ok(sessionId).build();
+        String result = "{\"sessionId\":\"" + sessionId + "\"}";
+        return Response.ok(result, MediaType.APPLICATION_JSON).build();
     }
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadFile(
-            @PathParam("projectId") String projectId,
-            @RestForm("meta") String meta,
-            @RestForm("data") InputStream data) throws JsonProcessingException {
-        // TODO Check if directory exists
-
-        Chunk c = new ObjectMapper().readValue(meta, Chunk.class);
+            @HeaderParam("X-Session") String sessionId,
+            @MultipartForm Chunk c) {
+        createTmpDir(sessionId);
 
         try {
-            String DIR = "/tmp/uploads/";
-            java.nio.file.Path dir = Paths.get(DIR, projectId);
-            // Files.createDirectories(dir);
+            java.nio.file.Path dir = Paths.get(DIR, sessionId);
 
-            java.nio.file.Path chunkPath = dir.resolve(c.getFilename() + c.getIndex() + ".chunk");
-            Files.write(chunkPath, data.readAllBytes());
+            java.nio.file.Path chunkPath = dir.resolve(c.getFileName() + c.getIndex() + ".chunk");
 
-            if(c.getIndex() == c.getTotalChunks() - 1) mergeFile(dir, c.getFilename(), c.getTotalChunks());
+            Files.write(chunkPath, c.getData());
+
+            if(c.getIndex() == c.getTotalChunks() - 1) mergeFile(dir, c.getFileName(), c.getTotalChunks());
 
             return Response.ok("Chunk " + c.getIndex() + " hochgeladen").build();
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity("Fehler beim Hochladen: " + e.getMessage()).build();
         }
     }

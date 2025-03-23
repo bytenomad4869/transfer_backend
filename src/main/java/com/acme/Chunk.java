@@ -1,34 +1,42 @@
 package com.acme;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.ws.rs.FormParam;
 
 public class Chunk {
-    private String filename;
+    @FormParam("data")
+    private byte[] data;
+
+    @FormParam("fileName")
+    private String fileName;
+
+    @FormParam("index")
     private int index;
+
+    @FormParam("totalChunks")
     private int totalChunks;
 
-    public Chunk() {
+    public String getFileName() {
+        return fileName;
     }
-
-    @JsonCreator
-    public Chunk(@JsonProperty("filename") String filename,
-                 @JsonProperty("index") int index,
-                 @JsonProperty("totalChunks") int totalChunks) {
-        this.filename = filename;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+    public int getIndex() {
+        return index;
+    }
+    public void setIndex(int index) {
         this.index = index;
+    }
+    public int getTotalChunks() {
+        return totalChunks;
+    }
+    public void setTotalChunks(int totalChunks) {
         this.totalChunks = totalChunks;
     }
-
-    public String getFilename() {
-        return this.filename;
+    public byte[] getData() {
+        return data;
     }
-
-    public int getIndex() {
-        return this.index;
-    }
-
-    public int getTotalChunks() {
-        return this.totalChunks;
+    public void setData(byte[] data) {
+        this.data = data;
     }
 }
